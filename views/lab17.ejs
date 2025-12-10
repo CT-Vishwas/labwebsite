@@ -1,0 +1,72 @@
+<h1 id="lab-python-testing-lab-overview">Lab: Python Testing Lab
+Overview</h1>
+<h2 id="1-parameterization-with-pytestmarkparametrize">1.
+Parameterization with <code>@pytest.mark.parametrize</code></h2>
+<ul>
+<li><strong>Objective:</strong> Learn how to run a test function
+multiple times with different arguments.</li>
+<li><strong>Topics Covered:</strong>
+<ul>
+<li>Syntax and usage of <code>@pytest.mark.parametrize</code></li>
+<li>Benefits of parameterized testing</li>
+</ul></li>
+<li><strong>Example:</strong>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pytest</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="at">@pytest.mark.parametrize</span>(<span class="st">&quot;input,expected&quot;</span>, [</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>        (<span class="dv">2</span>, <span class="dv">4</span>),</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>        (<span class="dv">3</span>, <span class="dv">9</span>),</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>        (<span class="dv">4</span>, <span class="dv">16</span>),</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>])</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_square(<span class="bu">input</span>, expected):</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">assert</span> <span class="bu">input</span> <span class="op">**</span> <span class="dv">2</span> <span class="op">==</span> expected</span></code></pre></div></li>
+</ul>
+<hr />
+<h2 id="2-unittestmock-library">2. <code>unittest.mock</code>
+Library</h2>
+<ul>
+<li><strong>Objective:</strong> Understand how to mock objects and
+functions for isolated testing.</li>
+<li><strong>Topics Covered:</strong>
+<ul>
+<li>Introduction to mocking</li>
+<li>Using <code>patch</code> to replace objects</li>
+</ul></li>
+<li><strong>Example:</strong>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> unittest.mock <span class="im">import</span> patch</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_data():</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Imagine this fetches data from an API</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">pass</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> process():</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        data <span class="op">=</span> get_data()</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> data <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_process():</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> patch(<span class="st">&#39;__main__.get_data&#39;</span>, return_value<span class="op">=</span><span class="dv">10</span>):</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>                <span class="cf">assert</span> process() <span class="op">==</span> <span class="dv">11</span></span></code></pre></div></li>
+</ul>
+<hr />
+<h2 id="3-pytest-fixtures">3. Pytest Fixtures</h2>
+<ul>
+<li><strong>Objective:</strong> Use fixtures to manage setup and
+teardown in tests.</li>
+<li><strong>Topics Covered:</strong>
+<ul>
+<li>Defining and using fixtures</li>
+<li>Fixture scopes</li>
+</ul></li>
+<li><strong>Example:</strong>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pytest</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="at">@pytest.fixture</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sample_list():</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>]</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_sum(sample_list):</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">assert</span> <span class="bu">sum</span>(sample_list) <span class="op">==</span> <span class="dv">6</span></span></code></pre></div></li>
+</ul>

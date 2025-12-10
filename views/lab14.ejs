@@ -1,0 +1,60 @@
+<h1 id="lab-integration-testing-in-python">Lab: Integration Testing in
+Python</h1>
+<h2 id="objectives">Objectives</h2>
+<ul>
+<li>Understand the concept of integration testing.</li>
+<li>Learn how to write integration tests in Python.</li>
+<li>Execute integration tests using <code>pytest</code>.</li>
+<li>Analyze test results and troubleshoot failures.</li>
+</ul>
+<h2 id="steps">Steps</h2>
+<h3 id="1-introduction-to-integration-testing">1. Introduction to
+Integration Testing</h3>
+<ul>
+<li>Define integration testing and its importance.</li>
+<li>Differentiate between unit and integration testing.</li>
+</ul>
+<h3 id="2-setting-up-the-environment">2. Setting Up the Environment</h3>
+<ul>
+<li>Install <code>pytest</code>:
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pytest</span></code></pre></div></li>
+</ul>
+<h3 id="3-example-python-modules">3. Example Python Modules</h3>
+<p><strong>module_a.py</strong></p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> add(x, y):</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> x <span class="op">+</span> y</span></code></pre></div>
+<p><strong>module_b.py</strong></p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> module_a <span class="im">import</span> add</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> add_and_double(x, y):</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> add(x, y) <span class="op">*</span> <span class="dv">2</span></span></code></pre></div>
+<h3 id="4-writing-integration-tests">4. Writing Integration Tests</h3>
+<p><strong>test_integration.py</strong></p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> module_b <span class="im">import</span> add_and_double</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_add_and_double():</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">assert</span> add_and_double(<span class="dv">2</span>, <span class="dv">3</span>) <span class="op">==</span> <span class="dv">10</span></span></code></pre></div>
+<h3 id="5-running-the-integration-tests">5. Running the Integration
+Tests</h3>
+<ul>
+<li>Run tests using:
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pytest</span> test_integration.py</span></code></pre></div></li>
+</ul>
+<h3 id="6-analyzing-results">6. Analyzing Results</h3>
+<ul>
+<li>Review output for passed/failed tests.</li>
+<li>Debug and fix any integration issues.</li>
+</ul>
+<h2 id="summary">Summary</h2>
+<ul>
+<li>Integration testing ensures that modules work together as
+expected.</li>
+<li><code>pytest</code> simplifies writing and running integration tests
+in Python.</li>
+<li>Regular integration testing improves software reliability.</li>
+</ul>
