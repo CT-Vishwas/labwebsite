@@ -181,14 +181,3 @@ class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a hr
 <span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>logger1.log(<span class="st">&quot;Started training Linear Regression model&quot;</span>)</span>
 <span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>logger2.log(<span class="st">&quot;Started training Decision Tree model&quot;</span>)</span>
 <span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(logger1.log_history)</span></code></pre></div>
-<h3 id="6-explanation">6. Explanation</h3>
-<ul>
-<li><strong>Singleton Pattern</strong> ensures only one instance of
-<code>DatabaseConnection</code> and <code>Logger</code> exists
-throughout the application.</li>
-<li>This prevents multiple connections or loggers from being created,
-which can save resources and maintain consistency.</li>
-<li>In the context of house rent prediction, you can use these
-singletons to manage database access and log model training events
-reliably.</li>
-</ul>
