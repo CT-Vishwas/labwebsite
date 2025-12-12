@@ -1,0 +1,817 @@
+<h1 id="lab-python-testing-for-data-engineers">Lab: Python testing for
+Data Engineers</h1>
+<ul>
+<li>Testing is a critical skill for both Data Scientists and Data
+Engineers to ensure the reliability and correctness of their code,
+models, and data pipelines.</li>
+</ul>
+<h2 id="python-testing-tools">Python Testing Tools</h2>
+<ol type="1">
+<li>The Standard: <code>pytest</code>:</li>
+</ol>
+<ul>
+<li><code>pytest</code> is the most popular and recommended testing
+framework for Python projects.</li>
+<li><em>Simple Syntax</em>: Tests are written as simple functions
+starting with test_.</li>
+<li><em>Fixtures</em>: Powerful way to set up and tear down testing
+environments (e.g., creating a temporary database connection, loading a
+small sample dataframe).</li>
+<li><em>Parametrization</em>: Easily run the same test function with
+different sets of input data.</li>
+</ul>
+<ol start="2" type="1">
+<li>Data Focussed Libraries:</li>
+</ol>
+<table>
+<thead>
+<tr class="header">
+<th>Library</th>
+<th>Primary Use Case</th>
+<th>Role Focus</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>pandas / numpy</td>
+<td>Asserting dataframes and arrays are equal.</td>
+<td>DS / DE</td>
+</tr>
+<tr class="even">
+<td>scikit-learn</td>
+<td>Testing model fit/predict, using metrics for validation.</td>
+<td>DS</td>
+</tr>
+<tr class="odd">
+<td>Great Expectations</td>
+<td>Automated Data Quality Checks and documentation of data assets.</td>
+<td>DE / DS</td>
+</tr>
+<tr class="even">
+<td>Deequ (AWS/Spark)</td>
+<td>Data quality validation at scale for Spark pipelines.</td>
+<td>DE</td>
+</tr>
+<tr class="odd">
+<td>moto</td>
+<td>Mocking AWS services (S3, Lambda) for local testing</td>
+<td>DE</td>
+</tr>
+</tbody>
+</table>
+<h2 id="best-practices-for-data-teams">Best Practices for Data
+Teams</h2>
+<ul>
+<li>Never test with live production data. Create small, representative
+datasets (fixtures) that capture edge cases</li>
+<li>Mocking is replacing a real component (like a database or an API
+call) with a controlled object that returns a predefined result.</li>
+<li>All tests should be run automatically every time code is committed
+or a merge request is made (Continuous Integration). This is how errors
+are caught before they reach the production environment.</li>
+<li>Aim for high test coverage, particularly for data transformation
+logic and model pre-processing steps. Use tools like pytest-cov to
+measure which lines of code are executed during your tests.</li>
+</ul>
+<h2 id="simple-testing-with-pandas--pytest">Simple Testing with Pandas
+&amp; Pytest</h2>
+<p>Using pytest with pandas is a fundamental skill for both Data
+Scientists and Data Engineers.</p>
+<h3 id="example-testing-a-data-cleaning-function">Example: Testing a
+Data Cleaning Function</h3>
+<p>Assume you have a simple function that capitalizes the strings in a
+specific column of a DataFrame. <strong>Step 1: Define the Python
+Function</strong><br />
+Create a file named <code>data_processor.py</code> to hold the function
+you want to test.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># data_processor.py</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> capitalize_column(df: pd.DataFrame, col_name: <span class="bu">str</span>) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">    Converts all string values in the specified column to uppercase.</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">    &quot;&quot;&quot;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    df_copy <span class="op">=</span> df.copy()</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> pd.api.types.is_string_dtype(df_copy[col_name]):</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>        df_copy[col_name] <span class="op">=</span> df_copy[col_name].<span class="bu">str</span>.upper()</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> df_copy</span></code></pre></div>
+<p><strong>Step 2: Create the Test File</strong><br />
+Create a file named <code>test_processor.py</code> in the same
+directory. This is where your test function will live.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># test_processor.py</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Import the function we want to test</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> data_processor <span class="im">import</span> capitalize_column </span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Import the pandas assertion function</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pandas.testing <span class="im">import</span> assert_frame_equal </span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_capitalize_column_correctly():</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. ARRANGE (Setup the Input Data)</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    input_data <span class="op">=</span> {</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;ID&#39;</span>: [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>],</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;Name&#39;</span>: [<span class="st">&#39;alice&#39;</span>, <span class="st">&#39;bob&#39;</span>, <span class="st">&#39;charlie&#39;</span>],</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;Value&#39;</span>: [<span class="dv">10</span>, <span class="dv">20</span>, <span class="dv">30</span>]</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    input_df <span class="op">=</span> pd.DataFrame(input_data)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. ARRANGE (Setup the Expected Output Data)</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    expected_data <span class="op">=</span> {</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;ID&#39;</span>: [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>],</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;Name&#39;</span>: [<span class="st">&#39;ALICE&#39;</span>, <span class="st">&#39;BOB&#39;</span>, <span class="st">&#39;CHARLIE&#39;</span>], <span class="co"># &lt;- This is the expected change</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;Value&#39;</span>: [<span class="dv">10</span>, <span class="dv">20</span>, <span class="dv">30</span>]</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    expected_df <span class="op">=</span> pd.DataFrame(expected_data)</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 3. ACT (Call the Function Under Test)</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    actual_df <span class="op">=</span> capitalize_column(input_df, <span class="st">&#39;Name&#39;</span>)</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 4. ASSERT (Check the Result)</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    assert_frame_equal(actual_df, expected_df)</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_capitalize_column_non_string():</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Test that it does nothing if the column is not strings</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    input_data <span class="op">=</span> {</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;ID&#39;</span>: [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>],</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;Value&#39;</span>: [<span class="fl">10.5</span>, <span class="fl">20.2</span>, <span class="fl">30.8</span>]</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>    input_df <span class="op">=</span> pd.DataFrame(input_data)</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>    <span class="co"># When the function is called, the output should be identical to the input</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>    actual_df <span class="op">=</span> capitalize_column(input_df, <span class="st">&#39;Value&#39;</span>)</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>    assert_frame_equal(actual_df, input_df)</span></code></pre></div>
+<p><strong>Step 3: Run the Tests with pytest</strong><br />
+Open your terminal in the directory where you saved these files and
+run</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pytest</span></span></code></pre></div>
+<h2 id="key-takeaways-for-pandas-testing">Key Takeaways for Pandas
+Testing</h2>
+<ul>
+<li>Use <code>pandas.testing.assert_frame_equal</code> or
+<code>assert_series_equal</code>: Never use the standard Python
+<code>assert actual_df == expected_df</code>.</li>
+<li>In data pipelines, it's a best practice to avoid modifying the input
+DataFrame in place, which makes testing much easier and safer.</li>
+<li>Arrange, Act, Assert: Structure your tests clearly</li>
+</ul>
+<h2 id="pytest-fixture-to-make-the-input-data-setup">Pytest fixture to
+make the input data setup</h2>
+<p>Fixtures provide a structured way to achieve reusability and
+dependency injection in your test suite.</p>
+<ul>
+<li><strong>Step 1: Define Fixtures in conftest.py</strong> When
+fixtures are defined in a file named conftest.py (located in the root of
+your test directory), they are automatically discovered and can be used
+by any test function in that directory or its subdirectories.</li>
+</ul>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># conftest.py</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pytest</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Input DataFrame Fixture</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="at">@pytest.fixture</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> input_df_fixture():</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Provides a sample DataFrame for testing the data processor.&quot;&quot;&quot;</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> {</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;ID&#39;</span>: [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>],</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;Name&#39;</span>: [<span class="st">&#39;alice&#39;</span>, <span class="st">&#39;bob&#39;</span>, <span class="st">&#39;charlie&#39;</span>],</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;Value&#39;</span>: [<span class="dv">10</span>, <span class="dv">20</span>, <span class="dv">30</span>]</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(data)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Expected Output DataFrame Fixture</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="at">@pytest.fixture</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> expected_capitalized_df():</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Provides the expected DataFrame after capitalization.&quot;&quot;&quot;</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> {</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;ID&#39;</span>: [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>],</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;Name&#39;</span>: [<span class="st">&#39;ALICE&#39;</span>, <span class="st">&#39;BOB&#39;</span>, <span class="st">&#39;CHARLIE&#39;</span>],</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;Value&#39;</span>: [<span class="dv">10</span>, <span class="dv">20</span>, <span class="dv">30</span>]</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(data)</span></code></pre></div>
+<ul>
+<li><strong>Step 2: Use Fixtures in test_processor.py</strong> Just list
+the fixture names as arguments, and pytest automatically handles the
+setup and passes the returned DataFrame into your test</li>
+</ul>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># test_processor.py</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> data_processor <span class="im">import</span> capitalize_column</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pandas.testing <span class="im">import</span> assert_frame_equal</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_capitalize_column_correctly(input_df_fixture, expected_capitalized_df):</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. ARRANGE (The data is injected via fixtures)</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. ACT (Call the Function Under Test)</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># We use input_df_fixture as the input argument</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    actual_df <span class="op">=</span> capitalize_column(input_df_fixture, <span class="st">&#39;Name&#39;</span>)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 3. ASSERT (Check the Result)</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="co"># We use expected_capitalized_df for comparison</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    assert_frame_equal(actual_df, expected_capitalized_df)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_capitalize_column_non_string(input_df_fixture):</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Test on the &#39;Value&#39; column which contains integers/floats</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. ARRANGE (Create the expected output - which is the original data)</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Since the column is non-string, the output should be identical to the input.</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    expected_df <span class="op">=</span> input_df_fixture.copy()</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. ACT</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    actual_df <span class="op">=</span> capitalize_column(input_df_fixture, <span class="st">&#39;Value&#39;</span>)</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 3. ASSERT</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    assert_frame_equal(actual_df, expected_df)</span></code></pre></div>
+<h2 id="mocking-to-mock-dependencies">Mocking to mock dependencies</h2>
+<ul>
+<li>Mocking is one of the most crucial concepts in testing, especially
+for Data Scientists and Data Engineers who deal with external resources
+like databases, APIs, and cloud services.</li>
+<li>Mocking is the act of replacing an actual object (like a database
+connection, a web API call, or an external file read) with a stand-in
+object (the "mock"). This stand-in object simulates the behavior of the
+real object in a controlled way.</li>
+<li>The core Python library for mocking is <code>unittest.mock</code>.
+The most commonly used class is <code>Mock</code>.</li>
+</ul>
+<h3 id="the-core-concept-patching">The Core Concept: Patching</h3>
+<p>To replace a real object with a mock, you use a technique called
+<code>patching</code>. You tell Python's import system to swap out the
+real object with your fake one for the duration of the test.</p>
+<p><em>Example Scenario</em>: You have a function that loads user data
+from an external REST API.</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># data_api.py</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> requests</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>API_ENDPOINT <span class="op">=</span> <span class="st">&#39;http://api.externaldata.com/users&#39;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fetch_user_data(user_id):</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Fetches user data from an external API and returns a DataFrame.&quot;&quot;&quot;</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>        response <span class="op">=</span> requests.get(<span class="ss">f&quot;</span><span class="sc">{</span>API_ENDPOINT<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>user_id<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        response.raise_for_status()  <span class="co"># Raises an exception for bad status codes</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>        data <span class="op">=</span> response.json().get(<span class="st">&#39;user_info&#39;</span>, {})</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Flatten and process data into a DataFrame</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pd.DataFrame([data]) </span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> requests.exceptions.RequestException <span class="im">as</span> e:</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f&quot;API Error: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pd.DataFrame()</span></code></pre></div>
+<p>We need to mock the external call: <code>requests.get</code>. We use
+<code>@mock.patch</code> to temporarily replace the real
+<code>requests.get</code> with a mock object.</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># test_data_api.py</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pytest</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> unittest <span class="im">import</span> mock</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pandas.testing <span class="im">import</span> assert_frame_equal</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> data_api <span class="im">import</span> fetch_user_data</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="at">@mock.patch</span>(<span class="st">&#39;data_api.requests.get&#39;</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_fetch_user_data_success(mock_get):</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Tests the function when the API call succeeds.&quot;&quot;&quot;</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. ARRANGE: Define the Mock&#39;s behavior</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Create a mock Response object</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    mock_response <span class="op">=</span> mock.Mock()</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Configure the mock Response object&#39;s methods and attributes</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    mock_response.status_code <span class="op">=</span> <span class="dv">200</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    mock_response.json.return_value <span class="op">=</span> {</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;status&#39;</span>: <span class="st">&#39;success&#39;</span>,</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;user_info&#39;</span>: {<span class="st">&#39;id&#39;</span>: <span class="dv">101</span>, <span class="st">&#39;name&#39;</span>: <span class="st">&#39;Mock User&#39;</span>, <span class="st">&#39;status&#39;</span>: <span class="st">&#39;Active&#39;</span>}</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Tell the mock_get (which replaced requests.get) to return our mock_response</span></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    mock_get.return_value <span class="op">=</span> mock_response</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Define the expected output DataFrame</span></span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>    expected_df <span class="op">=</span> pd.DataFrame([{<span class="st">&#39;id&#39;</span>: <span class="dv">101</span>, <span class="st">&#39;name&#39;</span>: <span class="st">&#39;Mock User&#39;</span>, <span class="st">&#39;status&#39;</span>: <span class="st">&#39;Active&#39;</span>}])</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. ACT: Call the function</span></span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>    actual_df <span class="op">=</span> fetch_user_data(user_id<span class="op">=</span><span class="dv">101</span>)</span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 3. ASSERT: Verification</span></span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Check that the data processing logic is correct</span></span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>    assert_frame_equal(actual_df, expected_df)</span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>    <span class="co"># *** Mocking Verification (Crucial Step) ***</span></span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Check that requests.get was called exactly once with the correct URL</span></span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a>    mock_get.assert_called_once_with(<span class="st">&#39;http://api.externaldata.com/users/101&#39;</span>)</span></code></pre></div>
+<h3 id="mocking-with-pytest-mock">Mocking with pytest-mock</h3>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># test_data_api_pytest_mock.py (using pytest-mock)</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pytest</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pandas.testing <span class="im">import</span> assert_frame_equal</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> data_api <span class="im">import</span> fetch_user_data</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co"># The mocker fixture is automatically provided by the pytest-mock plugin</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_fetch_user_data_with_mocker(mocker):</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Tests the function using the cleaner pytest-mock syntax.&quot;&quot;&quot;</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. ARRANGE: Define the Mock&#39;s behavior</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    mock_response <span class="op">=</span> mocker.Mock()</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    mock_response.status_code <span class="op">=</span> <span class="dv">200</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    mock_response.json.return_value <span class="op">=</span> {</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;status&#39;</span>: <span class="st">&#39;success&#39;</span>,</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;user_info&#39;</span>: {<span class="st">&#39;id&#39;</span>: <span class="dv">202</span>, <span class="st">&#39;name&#39;</span>: <span class="st">&#39;Pytest Mock&#39;</span>, <span class="st">&#39;status&#39;</span>: <span class="st">&#39;Inactive&#39;</span>}</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Use mocker.patch to replace the real function</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># mocker.patch returns the created mock object</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>    mock_get <span class="op">=</span> mocker.patch(<span class="st">&#39;data_api.requests.get&#39;</span>, return_value<span class="op">=</span>mock_response)</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    expected_df <span class="op">=</span> pd.DataFrame([{<span class="st">&#39;id&#39;</span>: <span class="dv">202</span>, <span class="st">&#39;name&#39;</span>: <span class="st">&#39;Pytest Mock&#39;</span>, <span class="st">&#39;status&#39;</span>: <span class="st">&#39;Inactive&#39;</span>}])</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. ACT</span></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>    actual_df <span class="op">=</span> fetch_user_data(user_id<span class="op">=</span><span class="dv">202</span>)</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 3. ASSERT</span></span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>    assert_frame_equal(actual_df, expected_df)</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>    mock_get.assert_called_once_with(<span class="st">&#39;http://api.externaldata.com/users/202&#39;</span>)</span></code></pre></div>
+<h3 id="example-mocking-an-s3-read-operation">Example: Mocking an S3
+Read Operation</h3>
+<ul>
+<li><strong>Step 1: Define the S3 Utility Function
+(s3_utils.py)</strong></li>
+</ul>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># s3_utils.py</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> boto3</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> io</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co"># We assume &#39;s3_client&#39; is initialized here or passed in.</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co"># For simplicity, we initialize it globally, which is common.</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>s3_client <span class="op">=</span> boto3.client(<span class="st">&#39;s3&#39;</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load_data_from_s3(bucket_name: <span class="bu">str</span>, key: <span class="bu">str</span>) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Reads a CSV file from S3 into a pandas DataFrame.&quot;&quot;&quot;</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>        <span class="co"># The key operation we need to mock is calling get_object() on the client</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>        response <span class="op">=</span> s3_client.get_object(Bucket<span class="op">=</span>bucket_name, Key<span class="op">=</span>key)</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Read the raw binary stream</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>        body <span class="op">=</span> response[<span class="st">&#39;Body&#39;</span>].read()</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Use io.BytesIO to treat the binary data as a file</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>        data_stream <span class="op">=</span> io.BytesIO(body)</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Load the data into a DataFrame</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>        df <span class="op">=</span> pd.read_csv(data_stream)</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> df</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f&quot;Error reading from S3: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pd.DataFrame()</span></code></pre></div>
+<ul>
+<li><strong>Step 2: Write the Test File using pytest-mock</strong></li>
+</ul>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># test_s3_utils.py</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pytest</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pandas.testing <span class="im">import</span> assert_frame_equal</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> s3_utils <span class="im">import</span> load_data_from_s3</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> io</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Test data we want the mock to return, formatted as a CSV string</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>MOCK_CSV_CONTENT <span class="op">=</span> (</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;id,name,value</span><span class="ch">\n</span><span class="st">&quot;</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;1,Alpha,100</span><span class="ch">\n</span><span class="st">&quot;</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;2,Beta,200</span><span class="ch">\n</span><span class="st">&quot;</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;3,Gamma,300</span><span class="ch">\n</span><span class="st">&quot;</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="co"># 💡 Fixture for the expected DataFrame</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="at">@pytest.fixture</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> expected_s3_df():</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Provides the DataFrame we expect from the mock CSV content.&quot;&quot;&quot;</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> {<span class="st">&#39;id&#39;</span>: [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>], <span class="st">&#39;name&#39;</span>: [<span class="st">&#39;Alpha&#39;</span>, <span class="st">&#39;Beta&#39;</span>, <span class="st">&#39;Gamma&#39;</span>], <span class="st">&#39;value&#39;</span>: [<span class="dv">100</span>, <span class="dv">200</span>, <span class="dv">300</span>]}</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(data)</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_load_data_from_s3_success(mocker, expected_s3_df):</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;</span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a><span class="co">    Tests successful S3 data loading by mocking the Boto3 call.</span></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a><span class="co">    &quot;&quot;&quot;</span></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. ARRANGE: Configure the Mock Response</span></span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Boto3&#39;s response for get_object is a dictionary. The file content</span></span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>    <span class="co"># is inside the &#39;Body&#39; key, which is a streaming object with a .read() method.</span></span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Mock the &#39;Body&#39; object</span></span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>    mock_body <span class="op">=</span> mocker.Mock()</span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Configure what mock_body.read() should return (the raw bytes of our CSV)</span></span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>    mock_body.read.return_value <span class="op">=</span> MOCK_CSV_CONTENT.encode(<span class="st">&#39;utf-8&#39;</span>)</span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Configure the full get_object response dictionary</span></span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>    mock_response <span class="op">=</span> {<span class="st">&#39;Body&#39;</span>: mock_body}</span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. ARRANGE: Patch the Target Function</span></span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The real S3 client is imported as &#39;s3_client&#39; in s3_utils.py.</span></span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>    <span class="co"># We are mocking the &#39;get_object&#39; method *on* that client object.</span></span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a>    mock_get_object <span class="op">=</span> mocker.patch(</span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;s3_utils.s3_client.get_object&#39;</span>,</span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a>        return_value<span class="op">=</span>mock_response</span>
+<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 3. ACT: Call the Function Under Test</span></span>
+<span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a>    test_bucket <span class="op">=</span> <span class="st">&#39;test-pipeline-bucket&#39;</span></span>
+<span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a>    test_key <span class="op">=</span> <span class="st">&#39;raw/data.csv&#39;</span></span>
+<span id="cb10-54"><a href="#cb10-54" aria-hidden="true" tabindex="-1"></a>    actual_df <span class="op">=</span> load_data_from_s3(test_bucket, test_key)</span>
+<span id="cb10-55"><a href="#cb10-55" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-56"><a href="#cb10-56" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 4. ASSERT: Verification</span></span>
+<span id="cb10-57"><a href="#cb10-57" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Check that the returned DataFrame matches the data we mocked</span></span>
+<span id="cb10-59"><a href="#cb10-59" aria-hidden="true" tabindex="-1"></a>    assert_frame_equal(actual_df, expected_s3_df)</span>
+<span id="cb10-60"><a href="#cb10-60" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-61"><a href="#cb10-61" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Crucial Verification: Check the mock was called correctly</span></span>
+<span id="cb10-62"><a href="#cb10-62" aria-hidden="true" tabindex="-1"></a>    mock_get_object.assert_called_once_with(</span>
+<span id="cb10-63"><a href="#cb10-63" aria-hidden="true" tabindex="-1"></a>        Bucket<span class="op">=</span>test_bucket, </span>
+<span id="cb10-64"><a href="#cb10-64" aria-hidden="true" tabindex="-1"></a>        Key<span class="op">=</span>test_key</span>
+<span id="cb10-65"><a href="#cb10-65" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div>
+<h2
+id="parametrization-for-running-the-same-test-with-different-inputs">Parametrization
+for running the same test with different inputs</h2>
+<p>Parametrization is one of the most powerful features of pytest. It
+allows you to run a single, well-written test function multiple times
+with different sets of inputs and expected outputs, which is perfect for
+checking various data edge cases.</p>
+<h3 id="example-testing-a-data-validation-function">Example: Testing a
+Data Validation Function</h3>
+<p>Let's assume you have a utility function that checks if a user's
+score is valid (must be a non-negative number).</p>
+<ul>
+<li><strong>Step 1: Define the Python Function
+(validation_utils.py)</strong></li>
+</ul>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># validation_utils.py</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> is_valid_score(score):</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Checks if a score is non-negative and finite.&quot;&quot;&quot;</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="bu">isinstance</span>(score, (<span class="bu">int</span>, <span class="bu">float</span>)):</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">False</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> score <span class="kw">is</span> <span class="va">None</span> <span class="kw">or</span> score <span class="op">&lt;</span> <span class="dv">0</span> <span class="kw">or</span> score <span class="op">!=</span> score: <span class="co"># score != score checks for NaN</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">False</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">True</span></span></code></pre></div>
+<ul>
+<li><strong>Step 2: Write a Parametrized Test
+(test_validation.py)</strong></li>
+</ul>
+<p>We will define a list of tuples, where each tuple represents one test
+case: (input_score, expected_result).</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># test_validation.py</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pytest</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> validation_utils <span class="im">import</span> is_valid_score</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co"># The decorator takes two main arguments:</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. A comma-separated string of argument names (matching the test function&#39;s arguments)</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. An iterable (usually a list of tuples) of the parameter values</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="at">@pytest.mark.parametrize</span>(</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;input_score, expected_is_valid&quot;</span>, </span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    [</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>        <span class="co"># --- Valid Scores ---</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>        (<span class="dv">10</span>, <span class="va">True</span>),             <span class="co"># Basic positive integer</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>        (<span class="dv">0</span>, <span class="va">True</span>),              <span class="co"># Boundary condition (zero)</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>        (<span class="fl">99.9</span>, <span class="va">True</span>),           <span class="co"># Positive float</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>        <span class="co"># --- Invalid Scores (Edge Cases) ---</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>        (<span class="op">-</span><span class="dv">5</span>, <span class="va">False</span>),            <span class="co"># Negative number</span></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>        (<span class="va">None</span>, <span class="va">False</span>),          <span class="co"># Missing value</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>        (<span class="st">&quot;100&quot;</span>, <span class="va">False</span>),         <span class="co"># Wrong data type (string)</span></span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>        <span class="co"># --- Special Numerical Cases (Data Science Specific) ---</span></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>        (<span class="bu">float</span>(<span class="st">&#39;inf&#39;</span>), <span class="va">True</span>),   <span class="co"># Infinity (usually considered valid if positive)</span></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>        (<span class="bu">float</span>(<span class="st">&#39;-inf&#39;</span>), <span class="va">False</span>), <span class="co"># Negative infinity</span></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>        (np.nan, <span class="va">False</span>),        <span class="co"># NaN (Not a Number)</span></span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>        (pd.NA, <span class="va">False</span>),         <span class="co"># Pandas missing value</span></span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_is_valid_score_cases(input_score, expected_is_valid):</span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;</span></span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a><span class="co">    Tests the is_valid_score function with a variety of data inputs.</span></span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a><span class="co">    &quot;&quot;&quot;</span></span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ACT &amp; ASSERT are combined in a single line</span></span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a>    actual_result <span class="op">=</span> is_valid_score(input_score)</span>
+<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> actual_result <span class="op">==</span> expected_is_valid</span></code></pre></div>
+<ul>
+<li><strong>Step 3: Run the Tests</strong> When you run pytest, it
+treats the single decorated function as twelve separate tests.</li>
+</ul>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pytest</span></span></code></pre></div>
+<h2 id="using-fixtures-with-parametrization">Using Fixtures with
+Parametrization</h2>
+<p>For example, if you need to test a cleaning function that handles
+different dtype conversions</p>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Parametrize a Fixture (advanced use)</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="at">@pytest.fixture</span>(params<span class="op">=</span>[</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    (pd.Series([<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>]), <span class="st">&#39;int64&#39;</span>),</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    (pd.Series([<span class="fl">1.0</span>, <span class="fl">2.5</span>, <span class="fl">3.1</span>]), <span class="st">&#39;float64&#39;</span>),</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    (pd.Series([<span class="st">&#39;a&#39;</span>, <span class="st">&#39;b&#39;</span>, <span class="st">&#39;c&#39;</span>]), <span class="st">&#39;object&#39;</span>),</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>])</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> series_and_dtype(request):</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Fixture returning (Series, expected_dtype) pairs.&quot;&quot;&quot;</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> request.param</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_dtype_conversion(series_and_dtype):</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    series, expected_dtype <span class="op">=</span> series_and_dtype</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Imagine a function called convert_to_best_dtype(series)</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>    <span class="co"># assert convert_to_best_dtype(series).dtype == expected_dtype</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">pass</span></span></code></pre></div>
+<h2 id="test-coverage">Test Coverage</h2>
+<p>Code Coverage is a metric that describes the degree to which the
+source code of a program is executed when a particular test suite is
+run.</p>
+<h3 id="how-to-use-pytest-cov">How to Use pytest-cov</h3>
+<ul>
+<li><strong>Step 1: Installation</strong></li>
+</ul>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pytest pytest-cov</span></code></pre></div>
+<ul>
+<li><strong>Step 2: Running Coverage</strong></li>
+</ul>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Measure coverage for the current directory/project</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="ex">pytest</span> <span class="at">--cov</span><span class="op">=</span>. </span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co"># OR, measure coverage for a specific package/module (e.g., &#39;my_package&#39;)</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co"># pytest --cov=my_package</span></span></code></pre></div>
+<ul>
+<li><strong>Step 3: Generating the HTML Report</strong></li>
+</ul>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pytest</span> <span class="at">--cov</span><span class="op">=</span>. <span class="at">--cov-report</span> html</span></code></pre></div>
+<p>You often want to prevent code with poor coverage from being merged.
+pytest-cov allows you to enforce a minimum coverage threshold using the
+--cov-fail-under flag</p>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># This command will fail the test run if the total coverage is less than 90%</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="ex">pytest</span> <span class="at">--cov</span><span class="op">=</span>. <span class="at">--cov-fail-under</span><span class="op">=</span>90</span></code></pre></div>
+<h2 id="integration-testing-example-etl-pipeline">Integration Testing
+Example: ETL Pipeline</h2>
+<p><strong>The Scenario: Data Ingestion and Transformation</strong> We
+want to test a pipeline that combines three components:</p>
+<ol type="1">
+<li>Source: A file reader (e.g., reading a local CSV, or simulating a
+database pull).</li>
+<li>Transformation: A Python function that cleans and processes the
+data.</li>
+<li>Sink: A function that writes the processed data to its final
+destination (e.g., a file, database, or API).</li>
+</ol>
+<p>The goal of the integration test is to confirm that if Component 1
+produces data, Component 2 transforms it correctly, and Component 3
+successfully saves the final result.</p>
+<p>Assume we have</p>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># data_cleaner.py - Component 2 (Transformation)</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> clean_and_normalize(df: pd.DataFrame) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Removes outliers (scores &gt; 100) and converts scores to a 0-1 range.&quot;&quot;&quot;</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. Cleaning: Drop rows where &#39;Score&#39; &gt; 100</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    df_clean <span class="op">=</span> df[df[<span class="st">&#39;Score&#39;</span>] <span class="op">&lt;=</span> <span class="dv">100</span>].copy()</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. Normalization: Scale scores to 0-1</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> df_clean.empty <span class="kw">and</span> df_clean[<span class="st">&#39;Score&#39;</span>].<span class="bu">max</span>() <span class="op">&gt;</span> <span class="dv">0</span>:</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>        max_score <span class="op">=</span> df_clean[<span class="st">&#39;Score&#39;</span>].<span class="bu">max</span>()</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>        df_clean[<span class="st">&#39;Score_Normalized&#39;</span>] <span class="op">=</span> df_clean[<span class="st">&#39;Score&#39;</span>] <span class="op">/</span> max_score</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>        df_clean[<span class="st">&#39;Score_Normalized&#39;</span>] <span class="op">=</span> <span class="fl">0.0</span></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> df_clean</span></code></pre></div>
+<p>Since this is an integration test, we must use real components for
+I/O, but we must also ensure the test is clean and isolated by using
+temporary, disposable resources.</p>
+<p>We will use <code>tmp_path</code>, a built-in pytest fixture, to
+create and manage a temporary directory for file I/O.</p>
+<div class="sourceCode" id="cb20"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># test_integration.py</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pandas.testing <span class="im">import</span> assert_frame_equal</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> data_cleaner <span class="im">import</span> clean_and_normalize</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the full end-to-end logic for the test</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run_etl_pipeline(input_path, output_path):</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Simulates the entire ETL run.&quot;&quot;&quot;</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. Source (Read the input CSV)</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>    input_df <span class="op">=</span> pd.read_csv(input_path)</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. Transformation (Call the core logic)</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>    processed_df <span class="op">=</span> clean_and_normalize(input_df)</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 3. Sink (Write the output CSV)</span></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>    processed_df.to_csv(output_path, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a><span class="co"># We use the built-in pytest fixture &#39;tmp_path&#39; for temporary I/O</span></span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_etl_integration(tmp_path):</span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a>    <span class="co"># --- 1. ARRANGE: Define Paths and Data ---</span></span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Use tmp_path to create temporary, isolated file paths</span></span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>    input_file <span class="op">=</span> tmp_path <span class="op">/</span> <span class="st">&quot;input_data.csv&quot;</span></span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>    output_file <span class="op">=</span> tmp_path <span class="op">/</span> <span class="st">&quot;processed_data.csv&quot;</span></span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Input Data: Contains an outlier (150) that should be removed</span></span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a>    input_data <span class="op">=</span> {</span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;ID&#39;</span>: [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>],</span>
+<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;Score&#39;</span>: [<span class="dv">70</span>, <span class="dv">90</span>, <span class="dv">150</span>, <span class="dv">50</span>],  <span class="co"># 150 is the outlier</span></span>
+<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;Category&#39;</span>: [<span class="st">&#39;A&#39;</span>, <span class="st">&#39;A&#39;</span>, <span class="st">&#39;B&#39;</span>, <span class="st">&#39;B&#39;</span>]</span>
+<span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb20-36"><a href="#cb20-36" aria-hidden="true" tabindex="-1"></a>    input_df <span class="op">=</span> pd.DataFrame(input_data)</span>
+<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb20-38"><a href="#cb20-38" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Write the input data to the temporary source file (Component 1 simulation)</span></span>
+<span id="cb20-39"><a href="#cb20-39" aria-hidden="true" tabindex="-1"></a>    input_df.to_csv(input_file, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb20-40"><a href="#cb20-40" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb20-41"><a href="#cb20-41" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb20-42"><a href="#cb20-42" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Expected Data: The max score is 90, so normalization is done relative to 90.</span></span>
+<span id="cb20-43"><a href="#cb20-43" aria-hidden="true" tabindex="-1"></a>    expected_data <span class="op">=</span> {</span>
+<span id="cb20-44"><a href="#cb20-44" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;ID&#39;</span>: [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">4</span>],</span>
+<span id="cb20-45"><a href="#cb20-45" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;Score&#39;</span>: [<span class="dv">70</span>, <span class="dv">90</span>, <span class="dv">50</span>],</span>
+<span id="cb20-46"><a href="#cb20-46" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;Category&#39;</span>: [<span class="st">&#39;A&#39;</span>, <span class="st">&#39;A&#39;</span>, <span class="st">&#39;B&#39;</span>],</span>
+<span id="cb20-47"><a href="#cb20-47" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;Score_Normalized&#39;</span>: [<span class="dv">70</span><span class="op">/</span><span class="dv">90</span>, <span class="dv">90</span><span class="op">/</span><span class="dv">90</span>, <span class="dv">50</span><span class="op">/</span><span class="dv">90</span>] <span class="co"># Expected transformation logic</span></span>
+<span id="cb20-48"><a href="#cb20-48" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb20-49"><a href="#cb20-49" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Ensure correct dtypes and column order for comparison</span></span>
+<span id="cb20-50"><a href="#cb20-50" aria-hidden="true" tabindex="-1"></a>    expected_df <span class="op">=</span> pd.DataFrame(expected_data)</span>
+<span id="cb20-51"><a href="#cb20-51" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb20-52"><a href="#cb20-52" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb20-53"><a href="#cb20-53" aria-hidden="true" tabindex="-1"></a>    <span class="co"># --- 2. ACT: Run the Integrated Pipeline ---</span></span>
+<span id="cb20-54"><a href="#cb20-54" aria-hidden="true" tabindex="-1"></a>    run_etl_pipeline(input_file, output_file)</span>
+<span id="cb20-55"><a href="#cb20-55" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb20-56"><a href="#cb20-56" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb20-57"><a href="#cb20-57" aria-hidden="true" tabindex="-1"></a>    <span class="co"># --- 3. ASSERT: Verification ---</span></span>
+<span id="cb20-58"><a href="#cb20-58" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb20-59"><a href="#cb20-59" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Read the final output file (Component 3 verification)</span></span>
+<span id="cb20-60"><a href="#cb20-60" aria-hidden="true" tabindex="-1"></a>    actual_output_df <span class="op">=</span> pd.read_csv(output_file)</span>
+<span id="cb20-61"><a href="#cb20-61" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb20-62"><a href="#cb20-62" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Check that the entire flow resulted in the correct final DataFrame</span></span>
+<span id="cb20-63"><a href="#cb20-63" aria-hidden="true" tabindex="-1"></a>    assert_frame_equal(</span>
+<span id="cb20-64"><a href="#cb20-64" aria-hidden="true" tabindex="-1"></a>        actual_output_df, </span>
+<span id="cb20-65"><a href="#cb20-65" aria-hidden="true" tabindex="-1"></a>        expected_df, </span>
+<span id="cb20-66"><a href="#cb20-66" aria-hidden="true" tabindex="-1"></a>        check_dtype<span class="op">=</span><span class="va">False</span>, <span class="co"># Relax dtype check for CSV output vs defined df</span></span>
+<span id="cb20-67"><a href="#cb20-67" aria-hidden="true" tabindex="-1"></a>        check_less_cols<span class="op">=</span><span class="va">True</span> <span class="co"># Output CSV might have generated an index column</span></span>
+<span id="cb20-68"><a href="#cb20-68" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb20-69"><a href="#cb20-69" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Check that the output file exists</span></span>
+<span id="cb20-70"><a href="#cb20-70" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> os.path.exists(output_file)</span></code></pre></div>
+<h2 id="hybrid-testing-mocking-an-api-within-an-integration-test">Hybrid
+Testing: Mocking an API within an Integration Test</h2>
+<p><em>Scenario</em>: We have a data pipeline that:</p>
+<ul>
+<li>Reads: Data from a local file containing user IDs and raw
+scores.</li>
+<li>Enriches: Calls a slow external User Status API for each ID to get
+the current status ('Active', 'Inactive'). (The part we will mock)</li>
+<li>Transforms: Processes the data (e.g., filters out inactive
+users).</li>
+<li>Writes: Saves the final, enriched data to a local output file.</li>
+</ul>
+<p>We want to test components 1, 3, and 4 working together
+(integration), while component 2 (the API call) is mocked to prevent
+network calls and ensure speed.</p>
+<div class="sourceCode" id="cb21"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># pipeline.py</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> requests</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>EXTERNAL_API_URL <span class="op">=</span> <span class="st">&#39;http://api.external.com/user_status/&#39;</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_user_status_from_api(user_id):</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Real function that hits the slow, external API.&quot;&quot;&quot;</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>        response <span class="op">=</span> requests.get(<span class="ss">f&quot;</span><span class="sc">{</span>EXTERNAL_API_URL<span class="sc">}{</span>user_id<span class="sc">}</span><span class="ss">&quot;</span>, timeout<span class="op">=</span><span class="dv">5</span>)</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>        response.raise_for_status()</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> response.json().get(<span class="st">&#39;status&#39;</span>, <span class="st">&#39;Unknown&#39;</span>)</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> requests.exceptions.RequestException:</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="st">&#39;API_Failed&#39;</span> <span class="co"># Handle failure case gracefully</span></span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run_enrichment_pipeline(input_path, output_path):</span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;The main ETL function integrating API calls.&quot;&quot;&quot;</span></span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. READ (Integration Component)</span></span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> pd.read_csv(input_path)</span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. ENRICHMENT (The API Call - THIS IS THE MOCK TARGET)</span></span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Apply the slow function to every row</span></span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a>    df[<span class="st">&#39;Status&#39;</span>] <span class="op">=</span> df[<span class="st">&#39;ID&#39;</span>].<span class="bu">apply</span>(get_user_status_from_api)</span>
+<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 3. TRANSFORMATION (Integration Component)</span></span>
+<span id="cb21-27"><a href="#cb21-27" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Filter out inactive users and API failures</span></span>
+<span id="cb21-28"><a href="#cb21-28" aria-hidden="true" tabindex="-1"></a>    df_filtered <span class="op">=</span> df[df[<span class="st">&#39;Status&#39;</span>] <span class="op">==</span> <span class="st">&#39;Active&#39;</span>]</span>
+<span id="cb21-29"><a href="#cb21-29" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb21-30"><a href="#cb21-30" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 4. WRITE (Integration Component)</span></span>
+<span id="cb21-31"><a href="#cb21-31" aria-hidden="true" tabindex="-1"></a>    df_filtered.to_csv(output_path, index<span class="op">=</span><span class="va">False</span>)</span></code></pre></div>
+<p>The testing file</p>
+<div class="sourceCode" id="cb22"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># test_pipeline.py</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pytest</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pandas.testing <span class="im">import</span> assert_frame_equal</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pipeline <span class="im">import</span> run_enrichment_pipeline</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> requests</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the mock API responses</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>MOCK_API_RESPONSES <span class="op">=</span> {</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ID 1: Active user (Should be kept)</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span>: {<span class="st">&#39;status&#39;</span>: <span class="st">&#39;Active&#39;</span>, <span class="st">&#39;code&#39;</span>: <span class="dv">200</span>},</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ID 2: Inactive user (Should be filtered out)</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2</span>: {<span class="st">&#39;status&#39;</span>: <span class="st">&#39;Inactive&#39;</span>, <span class="st">&#39;code&#39;</span>: <span class="dv">200</span>},</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ID 3: Unknown status (Should be filtered out based on the &#39;Active&#39; filter)</span></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>    <span class="dv">3</span>: {<span class="st">&#39;status&#39;</span>: <span class="st">&#39;Unknown&#39;</span>, <span class="st">&#39;code&#39;</span>: <span class="dv">200</span>},</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ID 4: Simulating an API failure/error (Should be filtered out via &#39;API_Failed&#39;)</span></span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>    <span class="dv">4</span>: {<span class="st">&#39;status&#39;</span>: <span class="st">&#39;API_Failed&#39;</span>, <span class="st">&#39;code&#39;</span>: <span class="dv">500</span>}</span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Use the tmp_path fixture for isolated file I/O</span></span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Use the mocker fixture for isolated network mocking</span></span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_hybrid_etl_integration(tmp_path, mocker):</span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># --- 1. ARRANGE: Mock the External API (requests.get) ---</span></span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Define a custom side_effect function for our mock</span></span>
+<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> mock_requests_get(url, <span class="op">**</span>kwargs):</span>
+<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a>        <span class="co"># 1. Create a dummy Mock Response object</span></span>
+<span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a>        mock_response <span class="op">=</span> mocker.Mock()</span>
+<span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a>        <span class="co"># 2. Extract the ID from the URL (http://.../user_status/ID)</span></span>
+<span id="cb22-33"><a href="#cb22-33" aria-hidden="true" tabindex="-1"></a>        user_id <span class="op">=</span> <span class="bu">int</span>(url.split(<span class="st">&#39;/&#39;</span>)[<span class="op">-</span><span class="dv">1</span>])</span>
+<span id="cb22-34"><a href="#cb22-34" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb22-35"><a href="#cb22-35" aria-hidden="true" tabindex="-1"></a>        <span class="co"># 3. Look up the predefined response data</span></span>
+<span id="cb22-36"><a href="#cb22-36" aria-hidden="true" tabindex="-1"></a>        response_data <span class="op">=</span> MOCK_API_RESPONSES.get(user_id, {<span class="st">&#39;status&#39;</span>: <span class="st">&#39;Default&#39;</span>, <span class="st">&#39;code&#39;</span>: <span class="dv">200</span>})</span>
+<span id="cb22-37"><a href="#cb22-37" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb22-38"><a href="#cb22-38" aria-hidden="true" tabindex="-1"></a>        <span class="co"># 4. Configure the Mock Response based on the ID</span></span>
+<span id="cb22-39"><a href="#cb22-39" aria-hidden="true" tabindex="-1"></a>        mock_response.status_code <span class="op">=</span> response_data[<span class="st">&#39;code&#39;</span>]</span>
+<span id="cb22-40"><a href="#cb22-40" aria-hidden="true" tabindex="-1"></a>        <span class="co"># If status code &gt;= 400, mock the error raising behavior</span></span>
+<span id="cb22-41"><a href="#cb22-41" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> response_data[<span class="st">&#39;code&#39;</span>] <span class="op">&gt;=</span> <span class="dv">400</span>:</span>
+<span id="cb22-42"><a href="#cb22-42" aria-hidden="true" tabindex="-1"></a>            mock_response.raise_for_status.side_effect <span class="op">=</span> requests.exceptions.HTTPError</span>
+<span id="cb22-43"><a href="#cb22-43" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb22-44"><a href="#cb22-44" aria-hidden="true" tabindex="-1"></a>            mock_response.raise_for_status.return_value <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb22-45"><a href="#cb22-45" aria-hidden="true" tabindex="-1"></a>            mock_response.json.return_value <span class="op">=</span> {<span class="st">&#39;status&#39;</span>: response_data[<span class="st">&#39;status&#39;</span>]}</span>
+<span id="cb22-46"><a href="#cb22-46" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb22-47"><a href="#cb22-47" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> mock_response</span>
+<span id="cb22-48"><a href="#cb22-48" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb22-49"><a href="#cb22-49" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Apply the patch to the function used in &#39;pipeline.py&#39;</span></span>
+<span id="cb22-50"><a href="#cb22-50" aria-hidden="true" tabindex="-1"></a>    mocker.patch(<span class="st">&#39;pipeline.requests.get&#39;</span>, side_effect<span class="op">=</span>mock_requests_get)</span>
+<span id="cb22-51"><a href="#cb22-51" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb22-52"><a href="#cb22-52" aria-hidden="true" tabindex="-1"></a>    <span class="co"># --- 2. ARRANGE: Setup Real I/O Files ---</span></span>
+<span id="cb22-53"><a href="#cb22-53" aria-hidden="true" tabindex="-1"></a>    input_file <span class="op">=</span> tmp_path <span class="op">/</span> <span class="st">&quot;input_raw.csv&quot;</span></span>
+<span id="cb22-54"><a href="#cb22-54" aria-hidden="true" tabindex="-1"></a>    output_file <span class="op">=</span> tmp_path <span class="op">/</span> <span class="st">&quot;output_processed.csv&quot;</span></span>
+<span id="cb22-55"><a href="#cb22-55" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb22-56"><a href="#cb22-56" aria-hidden="true" tabindex="-1"></a>    input_df <span class="op">=</span> pd.DataFrame({<span class="st">&#39;ID&#39;</span>: [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>], <span class="st">&#39;Score&#39;</span>: [<span class="dv">80</span>, <span class="dv">55</span>, <span class="dv">90</span>, <span class="dv">70</span>]})</span>
+<span id="cb22-57"><a href="#cb22-57" aria-hidden="true" tabindex="-1"></a>    input_df.to_csv(input_file, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb22-58"><a href="#cb22-58" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb22-59"><a href="#cb22-59" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Expected Data: Only ID 1 (Active) remains.</span></span>
+<span id="cb22-60"><a href="#cb22-60" aria-hidden="true" tabindex="-1"></a>    expected_df <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb22-61"><a href="#cb22-61" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;ID&#39;</span>: [<span class="dv">1</span>], </span>
+<span id="cb22-62"><a href="#cb22-62" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;Score&#39;</span>: [<span class="dv">80</span>], </span>
+<span id="cb22-63"><a href="#cb22-63" aria-hidden="true" tabindex="-1"></a>        <span class="st">&#39;Status&#39;</span>: [<span class="st">&#39;Active&#39;</span>] <span class="co"># The mocked status</span></span>
+<span id="cb22-64"><a href="#cb22-64" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb22-65"><a href="#cb22-65" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb22-66"><a href="#cb22-66" aria-hidden="true" tabindex="-1"></a>    <span class="co"># --- 3. ACT: Run the Integrated Pipeline ---</span></span>
+<span id="cb22-67"><a href="#cb22-67" aria-hidden="true" tabindex="-1"></a>    run_enrichment_pipeline(input_file, output_file)</span>
+<span id="cb22-68"><a href="#cb22-68" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb22-69"><a href="#cb22-69" aria-hidden="true" tabindex="-1"></a>    <span class="co"># --- 4. ASSERT: Verify the Full Integration ---</span></span>
+<span id="cb22-70"><a href="#cb22-70" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb22-71"><a href="#cb22-71" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Check the actual result file against the expected file</span></span>
+<span id="cb22-72"><a href="#cb22-72" aria-hidden="true" tabindex="-1"></a>    actual_output_df <span class="op">=</span> pd.read_csv(output_file)</span>
+<span id="cb22-73"><a href="#cb22-73" aria-hidden="true" tabindex="-1"></a>    assert_frame_equal(actual_output_df, expected_df)</span>
+<span id="cb22-74"><a href="#cb22-74" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb22-75"><a href="#cb22-75" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Check that the mocked function was called the correct number of times</span></span>
+<span id="cb22-76"><a href="#cb22-76" aria-hidden="true" tabindex="-1"></a>    <span class="co"># (The requests.get was called 4 times, once for each row)</span></span>
+<span id="cb22-77"><a href="#cb22-77" aria-hidden="true" tabindex="-1"></a>    mock_get <span class="op">=</span> requests.get <span class="co"># The original requests.get is still available outside the patch context</span></span>
+<span id="cb22-78"><a href="#cb22-78" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Use the mock&#39;s call count to verify the loop ran correctly</span></span>
+<span id="cb22-79"><a href="#cb22-79" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> mock_get.call_count <span class="op">==</span> <span class="dv">4</span></span></code></pre></div>
+<p>This hybrid approach gives you the best of both worlds: the speed and
+reliability of unit testing where dependencies are concerned, and the
+confidence of integration testing for your core processing logic and
+I/O.</p>

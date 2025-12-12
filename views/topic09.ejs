@@ -1,0 +1,126 @@
+<h1
+id="lab-using-aws-secrets-manager-for-secret-management-in-python">Lab:
+Using AWS Secrets Manager for Secret Management in Python</h1>
+<h2 id="objective">Objective</h2>
+<p>Learn how to securely store and retrieve secrets (API keys,
+passwords) using AWS Secrets Manager in Python projects.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>AWS account with permissions for Secrets Manager</li>
+<li>AWS CLI configured (<a
+href="https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html">AWS
+CLI setup guide</a>)</li>
+</ul>
+<h2 id="step-1-organize-project-structure">Step 1: Organize Project
+Structure</h2>
+<p>Your project should look like:</p>
+<pre><code>python_project/
+├── src/
+│   └── my_app/
+│       ├── __init__.py
+│       └── main.py
+├── config/
+│   └── settings.py
+├── tests/
+│   ├── __init__.py
+│   └── test_main.py
+├── setup.py
+├── README.md</code></pre>
+<h2 id="step-2-store-secrets-in-aws-secrets-manager">Step 2: Store
+Secrets in AWS Secrets Manager</h2>
+<ol type="1">
+<li>Open AWS Console and go to <strong>Secrets Manager</strong>.</li>
+<li>Click <strong>Store a new secret</strong>.</li>
+<li>Choose <strong>Other type of secret</strong>.</li>
+<li>Add key-value pairs, e.g.:</li>
+</ol>
+<pre><code>SECRET_KEY: my_super_secret_key
+DATABASE_URL: sqlite:///mydb.sqlite3
+DEBUG: True</code></pre>
+<ol start="5" type="1">
+<li>Use <code>aws configure</code>, to set the <code>access_key</code>,
+<code>access_secret</code></li>
+<li>Click <strong>Next</strong>, give your secret a name (e.g.,
+<code>my_app/secrets</code>), and finish the wizard.</li>
+</ol>
+<p>Alternatively, use AWS CLI:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> secretsmanager create-secret <span class="dt">\</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--name</span> my_app/secrets <span class="dt">\</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--secret-string</span> <span class="st">&#39;{&quot;SECRET_KEY&quot;:&quot;my_super_secret_key&quot;,&quot;DATABASE_URL&quot;:&quot;sqlite:///mydb.sqlite3&quot;,&quot;DEBUG&quot;:&quot;True&quot;}&#39;</span></span></code></pre></div>
+<h2 id="step-3-install-aws-sdk-for-python-boto3">Step 3: Install AWS SDK
+for Python (<code>boto3</code>)</h2>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install boto3</span></code></pre></div>
+<h2 id="step-4-retrieve-secrets-in-your-application">Step 4: Retrieve
+Secrets in Your Application</h2>
+<p><strong><code>src/my_app/main.py</code>:</strong></p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> boto3</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_secret(secret_name):</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>     session <span class="op">=</span> boto3.session.Session()</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>     client <span class="op">=</span> session.client(service_name<span class="op">=</span><span class="st">&#39;secretsmanager&#39;</span>, region_name<span class="op">=</span>region_name)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>     <span class="cf">try</span>:</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>          get_secret_value_response <span class="op">=</span> client.get_secret_value(SecretId<span class="op">=</span>secret_name)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>          secret <span class="op">=</span> get_secret_value_response[<span class="st">&#39;SecretString&#39;</span>]</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>          <span class="cf">return</span> json.loads(secret)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>     <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>          <span class="co"># Raise a specific error that explains the failure context</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>          <span class="cf">raise</span> <span class="pp">RuntimeError</span>(<span class="ss">f&quot;AWS Secrets Manager failed to retrieve secret &#39;</span><span class="sc">{</span>secret_name<span class="sc">}</span><span class="ss">&#39;: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">&quot;</span>) <span class="im">from</span> e</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> main():</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>     secrets <span class="op">=</span> get_secret(<span class="st">&#39;my_app/secrets&#39;</span>)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>     secret_key <span class="op">=</span> secrets.get(<span class="st">&#39;SECRET_KEY&#39;</span>)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>     db_url <span class="op">=</span> secrets.get(<span class="st">&#39;DATABASE_URL&#39;</span>)</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>     debug <span class="op">=</span> secrets.get(<span class="st">&#39;DEBUG&#39;</span>, <span class="st">&#39;False&#39;</span>) <span class="op">==</span> <span class="st">&#39;True&#39;</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>     <span class="bu">print</span>(<span class="st">&quot;Secret Key:&quot;</span>, secret_key)</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>     <span class="bu">print</span>(<span class="st">&quot;Database URL:&quot;</span>, db_url)</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>     <span class="bu">print</span>(<span class="st">&quot;Debug Mode:&quot;</span>, debug)</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">&quot;__main__&quot;</span>:</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>     main()</span></code></pre></div>
+<h2 id="step-5-run-and-test">Step 5: Run and Test</h2>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> src/my_app/main.py</span></code></pre></div>
+<p>You should see your secret key, database URL, and debug mode
+printed.</p>
+<h2 id="step-6-switch-environments">Step 6: Switch Environments</h2>
+<ul>
+<li>Store separate secrets for each environment (e.g.,
+<code>my_app/dev_secrets</code>, <code>my_app/prod_secrets</code>).</li>
+<li>Load the appropriate secret based on an environment variable or
+command-line argument.</li>
+</ul>
+<h2 id="step-7-best-practices">Step 7: Best Practices</h2>
+<ul>
+<li>Use AWS Secrets Manager for all secrets and sensitive config.</li>
+<li>Restrict access to secrets using IAM policies.</li>
+<li>Never hardcode secrets in code or commit them to version
+control.</li>
+</ul>
+<h2 id="next-steps">Next Steps</h2>
+<h3 id="1-integrate-secrets-retrieval-in-your-app">1. Integrate Secrets
+Retrieval in Your App</h3>
+<p>Update your main application logic to fetch secrets at startup:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> src.my_app.main <span class="im">import</span> get_secret</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> main():</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    secret_name <span class="op">=</span> os.getenv(<span class="st">&#39;SECRET_NAME&#39;</span>, <span class="st">&#39;my_app/secrets&#39;</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    secrets <span class="op">=</span> get_secret(secret_name)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Use secrets in your app logic</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">&quot;Loaded SECRET_KEY:&quot;</span>, secrets[<span class="st">&#39;SECRET_KEY&#39;</span>])</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">&quot;__main__&quot;</span>:</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    main()</span></code></pre></div>
+<h3 id="2-use-environment-variables-to-select-secrets">2. Use
+Environment Variables to Select Secrets</h3>
+<p>Set the environment variable before running your app:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">SECRET_NAME</span><span class="op">=</span>my_app/dev_secrets</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> src/my_app/main.py</span></code></pre></div>
+<p>This loads secrets for the specified environment, making your app
+flexible for dev, test, or prod.</p>

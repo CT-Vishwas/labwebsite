@@ -1,0 +1,98 @@
+<h1 id="lab-simple-log-based-debugging-in-python">Lab: Simple Log-Based
+Debugging in Python</h1>
+<h2 id="objective">Objective</h2>
+<p>Learn how to use logging for debugging Python code.</p>
+<h2 id="simple-example">Simple Example</h2>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> logging</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Configure logging</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>logging.basicConfig(level<span class="op">=</span>logging.DEBUG)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> divide(a, b):</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    logging.debug(<span class="ss">f&quot;Dividing </span><span class="sc">{</span>a<span class="sc">}</span><span class="ss"> by </span><span class="sc">{</span>b<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        result <span class="op">=</span> a <span class="op">/</span> b</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>        logging.info(<span class="ss">f&quot;Result: </span><span class="sc">{</span>result<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> result</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">ZeroDivisionError</span> <span class="im">as</span> e:</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>        logging.error(<span class="st">&quot;Attempted division by zero!&quot;</span>)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>divide(<span class="dv">10</span>, <span class="dv">2</span>)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>divide(<span class="dv">5</span>, <span class="dv">0</span>)</span></code></pre></div>
+<h2 id="steps">Steps</h2>
+<ol type="1">
+<li><p><strong>Import the logging module</strong></p>
+<ul>
+<li><code>import logging</code></li>
+</ul></li>
+<li><p><strong>Configure the logging level</strong></p>
+<ul>
+<li>Use <code>logging.basicConfig(level=logging.DEBUG)</code> to show
+debug messages.</li>
+</ul></li>
+<li><p><strong>Add log statements</strong></p>
+<ul>
+<li>Use <code>logging.debug()</code>, <code>logging.info()</code>, and
+<code>logging.error()</code> to track code execution and errors.</li>
+</ul></li>
+<li><p><strong>Run the code</strong></p>
+<ul>
+<li>Observe the log output in the console to understand the program flow
+and catch errors.</li>
+</ul></li>
+</ol>
+<h2 id="setting-up-project-level-logging-with-singleton-pattern">Setting
+Up Project-Level Logging with Singleton Pattern</h2>
+<h3 id="steps-1">Steps</h3>
+<ol type="1">
+<li><strong>Create a Logger Utility Module</strong></li>
+</ol>
+<ul>
+<li>Make a separate Python file (e.g., <code>logger.py</code>) to
+configure logging for the entire project.</li>
+</ul>
+<ol start="2" type="1">
+<li><strong>Implement Singleton Pattern for Logger</strong></li>
+</ol>
+<ul>
+<li>Ensure only one logger instance exists using a class with a static
+method.</li>
+</ul>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> logging</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> LoggerSingleton:</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>   _logger <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>   <span class="at">@staticmethod</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>   <span class="kw">def</span> get_logger():</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> LoggerSingleton._logger <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>              LoggerSingleton._logger <span class="op">=</span> logging.getLogger(<span class="st">&quot;project_logger&quot;</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>              LoggerSingleton._logger.setLevel(logging.DEBUG)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>              handler <span class="op">=</span> logging.StreamHandler()</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>              formatter <span class="op">=</span> logging.Formatter(<span class="st">&#39;</span><span class="sc">%(asctime)s</span><span class="st"> - </span><span class="sc">%(levelname)s</span><span class="st"> - </span><span class="sc">%(message)s</span><span class="st">&#39;</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>              handler.setFormatter(formatter)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>              LoggerSingleton._logger.addHandler(handler)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> LoggerSingleton._logger</span></code></pre></div>
+<p><strong>Use the Singleton Logger in Your Code</strong></p>
+<ul>
+<li>Import and use the logger from anywhere in your project.</li>
+</ul>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> logger <span class="im">import</span> LoggerSingleton</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>logger <span class="op">=</span> LoggerSingleton.get_logger()</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>logger.info(<span class="st">&quot;This is a project-level log message.&quot;</span>)</span></code></pre></div>
+<p><strong>Configure Logging Level as Needed</strong></p>
+<ul>
+<li>Change <code>setLevel(logging.DEBUG)</code> to <code>INFO</code> or
+<code>ERROR</code> to adjust verbosity.</li>
+</ul>
+<p><strong>Benefits</strong></p>
+<ul>
+<li>Centralized logging configuration.</li>
+<li>Consistent log format and level across all modules.</li>
+<li>Avoids duplicate logger instances.</li>
+</ul>

@@ -1,0 +1,37 @@
+<h1 id="lab-setting-up-git-for-pip-packages">Lab: Setting up git for pip
+packages</h1>
+<p>To set up a Git repository for hosting pip packages, you need to
+first structure your Python project correctly, use a Git hosting service
+(like GitHub, GitLab, or Bitbucket), and then use specific pip install
+commands to install the package from the repository.</p>
+<h2 id="step-1-prepare-your-python-package">Step 1: Prepare Your Python
+Package</h2>
+<p>Ensure your project is structured as a Python package, which
+typically requires a <code>setup.py</code> or
+<code>pyproject.toml</code> file at the root. This file tells pip how to
+install the package and its dependencies.</p>
+<pre class="plaintext"><code>your_package_name/
+├── your_package_name/
+│   ├── __init__.py
+│   └── module.py
+├── setup.py
+└── README.md</code></pre>
+<h2 id="step-2-set-up-a-git-repository-and-host-it">Step 2: Set Up a Git
+Repository and Host It</h2>
+<p>Initialize Git</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> init</span></code></pre></div>
+<p>Add Files and Commit</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> add .</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> commit <span class="at">-m</span> <span class="st">&quot;commit message&quot;</span></span></code></pre></div>
+<p>Create a Remote Repository<br />
+Connect Local to Remote</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> remote add origin <span class="pp">[</span><span class="ss">remote_repository_url</span><span class="pp">]</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> push <span class="at">-u</span> origin main</span></code></pre></div>
+<h2 id="step-3-install-the-package-with-pip">Step 3: Install the Package
+with Pip</h2>
+<p>The general format is
+<code>pip install git+[repository_url]@[version_specifier]</code>. The
+version specifier can be a branch name, tag, or commit hash.</p>

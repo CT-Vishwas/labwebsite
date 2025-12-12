@@ -1,0 +1,172 @@
+<h1 id="lab-python-unit-testing-lab">Lab: Python Unit Testing Lab</h1>
+<h2 id="lab-objectives">Lab Objectives</h2>
+<p>Upon completion of this lab, students will be able to:</p>
+<ol type="1">
+<li><strong>Understand the purpose of unit testing</strong> and its role
+in the software development lifecycle.</li>
+<li><strong>Differentiate between various types of tests</strong> (unit,
+integration, end-to-end).</li>
+<li><strong>Implement unit tests</strong> for Python code using the
+built-in <code>unittest</code> module.</li>
+<li><strong>Structure and organize test code</strong> using
+<code>TestCase</code> classes and test methods.</li>
+<li><strong>Utilize common assertion methods</strong> to verify expected
+outcomes.</li>
+<li><strong>Run tests</strong> from the command line and interpret the
+results.</li>
+<li><strong>Apply setup and teardown methods</strong> to manage test
+prerequisites.</li>
+</ol>
+<h2 id="lab-sections">Lab Sections</h2>
+<h3 id="1-introduction-to-unit-testing">1. Introduction to Unit
+Testing</h3>
+<ul>
+<li><strong>1.1 What is Unit Testing?</strong>
+<ul>
+<li><em>Definition</em>: Testing the smallest testable parts of an
+application (units).</li>
+<li><em>Benefits</em>: Early bug detection, improved code quality,
+easier refactoring.</li>
+</ul></li>
+<li><strong>1.2 The <code>unittest</code> Framework</strong>
+<ul>
+<li>Overview of the framework, inspired by JUnit.</li>
+<li><em>Key Components</em>: Test Fixture, Test Case, Test Suite, Test
+Runner.</li>
+</ul></li>
+</ul>
+<h3 id="2-setting-up-the-environment-and-first-test">2. Setting Up the
+Environment and First Test</h3>
+<ul>
+<li><strong>2.1 The Code Under Test (CUT)</strong></li>
+</ul>
+<ul>
+<li>Create a simple Python module (<code>calculator.py</code>)
+containing basic functions (<code>add</code>, <code>subtract</code>,
+<code>multiply</code>).</li>
+</ul>
+<p><strong><code>calculator.py</code>:</strong></p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> add(a, b):</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> a <span class="op">+</span> b</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> subtract(a, b):</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> a <span class="op">-</span> b</span></code></pre></div>
+<ul>
+<li><p><strong>2.2 Creating a Test File</strong></p>
+<ul>
+<li>Creating a separate file for tests
+(<code>test_calculator.py</code>).</li>
+<li>The necessary imports: <code>import unittest</code> and importing
+the CUT.</li>
+</ul></li>
+<li><p><strong>2.3 Implementing the First Test Case</strong></p>
+<ul>
+<li>Defining a test class that inherits from
+<code>unittest.TestCase</code>.</li>
+<li>Creating a simple test method
+(<code>test_add_positive_numbers</code>).</li>
+</ul></li>
+</ul>
+<p><strong>Example Snippet
+(<code>test_calculator.py</code>):</strong></p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> unittest</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> calculator <span class="im">import</span> add</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> TestCalculator(unittest.TestCase):</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> test_add_positive_numbers(<span class="va">self</span>):</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        <span class="co"># The expected result of 5 + 3 is 8</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.assertEqual(add(<span class="dv">5</span>, <span class="dv">3</span>), <span class="dv">8</span>, <span class="st">&quot;Should be 8&quot;</span>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> test_add_negative_numbers(<span class="va">self</span>):</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.assertEqual(add(<span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">5</span>), <span class="op">-</span><span class="dv">6</span>)</span></code></pre></div>
+<h3 id="3-core-unittest-concepts-and-assertions">3. Core unittest
+Concepts and Assertions</h3>
+<ul>
+<li><strong>3.1 Test Method Naming Convention</strong></li>
+</ul>
+<ul>
+<li>All test methods must start with <code>test_</code>.</li>
+</ul>
+<ul>
+<li><strong>3.2 Common Assertion Methods</strong></li>
+</ul>
+<ul>
+<li>key assertion methods
+<ul>
+<li>self.assertEqual(a, b)</li>
+<li>self.assertTrue(x) / self.assertFalse(x)</li>
+<li>self.assertIn(a, b) / self.assertNotIn(a, b)</li>
+<li>self.assertAlmostEqual(a, b) (for floats)</li>
+<li>self.assertRaises(Exception)</li>
+</ul></li>
+</ul>
+<ul>
+<li><strong>3.3 Testing Edge Cases and Exceptions</strong>
+<ul>
+<li>Writing tests to handle zero, negative numbers, and non-numeric
+inputs.</li>
+<li>Using the <code>with self.assertRaises(ExceptionType)</code>:
+context manager.</li>
+</ul></li>
+<li><strong>Example: Testing for Exceptions (assuming subtract raises an
+error on strings):</strong></li>
+</ul>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_subtract_non_numeric_raises_typeerror(<span class="va">self</span>):</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> <span class="va">self</span>.assertRaises(<span class="pp">TypeError</span>):</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>            subtract(<span class="st">&quot;hello&quot;</span>, <span class="dv">5</span>)</span></code></pre></div>
+<h3 id="4-managing-test-prerequisites">4. Managing Test
+Prerequisites</h3>
+<ul>
+<li><strong>4.1 The Need for Test Fixtures</strong></li>
+</ul>
+<ul>
+<li>Understanding the concept of the test fixture (the necessary setup
+steps).</li>
+</ul>
+<ul>
+<li><strong>4.2 Using setUp and tearDown</strong></li>
+</ul>
+<ul>
+<li><code>setUp()</code>: Code that runs before every test method.</li>
+<li><code>tearDown()</code>: Code that runs after every test method
+(cleanup).</li>
+</ul>
+<h2
+id="example-initializing-a-class-instance-or-a-temporary-file">Example:
+Initializing a class instance or a temporary file.</h2>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> TestWithFixture(unittest.TestCase):</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> setUp(<span class="va">self</span>):</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Runs before every test method</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.value_a <span class="op">=</span> <span class="dv">10</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.value_b <span class="op">=</span> <span class="dv">5</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> test_subtraction_result(<span class="va">self</span>):</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.assertEqual(subtract(<span class="va">self</span>.value_a, <span class="va">self</span>.value_b), <span class="dv">5</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> tearDown(<span class="va">self</span>):</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Runs after every test method (optional cleanup)</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">pass</span></span></code></pre></div>
+<h3 id="5-running-and-interpreting-tests">5. Running and Interpreting
+Tests</h3>
+<ul>
+<li><strong>5.1 Running Tests from the Command Line</strong></li>
+</ul>
+<ul>
+<li>Using the discovery feature:
+<code>python -m unittest discover</code></li>
+<li>Running a specific file:
+<code>python -m unittest test_calculator.py</code></li>
+</ul>
+<ul>
+<li><strong>5.2 Interpreting Test Results</strong></li>
+</ul>
+<ul>
+<li>Understanding the output: . <code>(passed)</code>,
+<code>F (failed)</code>, <code>E (error)</code>.</li>
+<li>Analyzing the traceback for failures.</li>
+</ul>
